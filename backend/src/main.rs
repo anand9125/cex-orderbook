@@ -8,6 +8,8 @@ pub use models::*;
 pub mod types;
 use tokio::sync::mpsc;
 use types::*;
+pub mod engine;
+pub use engine::*;
 
 use crate::state::AppState;
 pub mod state;
@@ -30,4 +32,21 @@ async fn main(){
     .unwrap()
     .run()
     .await;
+
+
+
+    std::thread::spawn(move || {
+        let mini_runtime = tokio::runtime::Builder::new_current_thread()
+            .thread_name("order book thread")
+            .enable_all()
+            .build()
+            .expect("Failed to create tokio runtime on block thread");
+        mini_runtime.block_on(async move {
+            loop {
+                
+                
+            }
+        })
+
+    })
 }

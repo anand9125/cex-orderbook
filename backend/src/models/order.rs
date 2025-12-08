@@ -1,11 +1,10 @@
-use actix_web::{HttpResponse, Responder, http::StatusCode, web::{self, Json}};
+use actix_web::{ Responder, http::StatusCode, web::{self, Json}};
 use rust_decimal::{Decimal, prelude::{FromPrimitive}};
 use rust_decimal_macros::dec;
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
 use crate::{state::{ AppState}, types::{ Order, OrderBookMessage, OrderRequest, OrderResponse, Response}};
-
 
 pub async fn place_order(body: Json<OrderRequest>,state:web::Data<AppState>) -> impl Responder {
     let order = body.into_inner();
@@ -55,18 +54,29 @@ pub async fn place_order(body: Json<OrderRequest>,state:web::Data<AppState>) -> 
 
     match rx.await{
         Ok(response)=>{
-
-
+            return (
+                Json(Response{
+                    message:format!(
+                        "order processd : filled {},remaining:{},{}",
+                        response.filled,response.remaining,response.status
+                    ),
+                    error:String::new()
+                }),
+                StatusCode::OK
+            );
         }
         Err(val) => {
+            return (
+                Json(
+                    Response{
+                        message:String::new(),
+                        error:format!("error while recieving")
+                    }
+                ),
+                StatusCode::BAD_REQUEST
+            );
 
         }
     }
-    (
-        Json(Response {
-            message: format!("Parsed price={} amount={}", price, amount),
-            error: String::new(),
-        }),
-        StatusCode::OK,
-    )
 }
+
