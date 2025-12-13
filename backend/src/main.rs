@@ -26,7 +26,7 @@ async fn main(){
             .app_data(web::Data::new(AppState{book_tx:book_tx.clone(),db:db.clone()}))
             .service(web::resource("/signin").route(web::post().to(create_user)))
             .service(web::resource("/signin").route(web::post().to(signin)))
-            .service(web::resource("/order").route(web::post().to(place_order)))
+         //   .service(web::resource("/order").route(web::post().to(place_order)))
     })
     .bind("0.0.0.0:3000")
     .unwrap()

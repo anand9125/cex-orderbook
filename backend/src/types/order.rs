@@ -2,7 +2,7 @@ pub use serde::{Serialize,Deserialize};
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
-use crate::{Order, OrderId, Quantity, UserId};
+use crate::{Order, OrderId, Price, Quantity, UserId};
 
 #[derive(Deserialize, Serialize)]
 pub struct OrderRequest {
@@ -34,14 +34,16 @@ pub struct Response {
     pub message: String,
     pub error: String,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Priority {
     Critical = 0,
-    High = 1,
-    Normal = 2, 
-    Low = 3
+    High     = 1,
+    Normal   = 2,
+    Low      = 3,
 }
+
 pub enum OrderStatus {
     Accepted,
     FullyFilled,
@@ -55,16 +57,29 @@ pub struct OrderResponse{
     pub filled : Quantity,
     pub remaining : Quantity
 }
-pub enum OrderBookMessage{
-    PlaceOrder{
+pub enum OrderBookMessage {
+    PlaceOrder {
         order: Order,
-        priority : Priority,
-        responder : oneshot::Sender<Result<OrderResponse,String>>
+        priority: Priority,  //configurable
+        responder: Option<oneshot::Sender<Result<OrderResponse, String>>>,
     },
-    CancelOrder{
-        order_id : OrderId,
-        user_id : UserId,
-        priority : Priority,
-        responder : oneshot::Sender<Result<OrderResponse,String>>
+    //prioruty for all message is fixed
+    CancelOrder {
+        order_id: OrderId,
+        user_id: UserId,
+        responder: oneshot::Sender<Result<OrderResponse, String>>,
+    },
+    UpdateMarkPrice {
+        price: Price,
+    },
+}
+
+impl OrderBookMessage {
+    pub fn priority(&self) -> Priority {
+        match self {
+            OrderBookMessage::PlaceOrder { priority, .. } => *priority,
+            OrderBookMessage::CancelOrder { .. } => Priority::Critical,
+            OrderBookMessage::UpdateMarkPrice { .. } => Priority::Critical,
+        }
     }
 }

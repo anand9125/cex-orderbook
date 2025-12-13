@@ -72,27 +72,6 @@ impl Order {
     pub fn remaining(&self)->Quantity{
         self.quantity-self.filled
     }
-    pub fn validate(&self)->Result<(),String>{
-        if self.quantity <= dec!(0){
-            return Err(format!("quantity must be greater then 0 got {}",self.quantity));
-        }
-        if self.leverage <= dec!(0){
-            return Err(format!("leverage must be greater then 0 got {}",self.leverage));
-        }
-        match self.order_type {
-            OrderType::Limit =>{
-                    if self.price.is_none() || self.price.unwrap() <= dec!(0) {
-                    return Err("limit order must have valid price".into());
-                }
-            }
-            OrderType::Market =>{
-                 if self.price.is_some() {
-                    return Err("market order should not have price".into());
-                }
-            } 
-        }
-        Ok(())
-    }
 }
 
 pub struct OrderBook {
@@ -104,7 +83,7 @@ pub struct OrderBook {
    pub best_ask :Option<Price>,
    pub fill_seq:u64  //sequence numners for fills
 }
-
+#[derive(Clone)]
 pub struct Fill{
     pub seq_no : u64,
     pub maker_order_id:OrderId,
@@ -132,22 +111,28 @@ impl OrderBook{
             fill_seq : 0
         }
     }
+    
+
     pub fn get_orderbook_side(&mut self,side:Side)->&mut  BTreeMap<Price,PriceLevel>{
         match side {
             Side::Buy => &mut self.bids,
             Side::Sell => &mut self.asks
         }
     }
+   
     pub fn get_opposite_side(&mut self,side:Side)->&mut BTreeMap<Price,PriceLevel>{
         match side {
             Side::Buy => &mut self.asks,
             Side::Sell => &mut self.bids
         }
     }
+   
     pub fn update_best_prices(&mut self){
         self.best_ask = self.asks.keys().next().cloned();
         self.best_bid = self.bids.keys().next_back().cloned();
     }
+   
+
     pub fn insert_order (&mut self,order: Order){
         if order.order_type != OrderType::Limit{
             return;
@@ -178,7 +163,7 @@ impl OrderBook{
         self.update_best_prices();
 
     }
-
+    
     pub fn cancel_order(&mut self, order_id : &OrderId, user_id :&UserId)->Result<Order,String>{
         let order = self.orders.get(order_id).ok_or("order is not found").unwrap();
 
@@ -209,8 +194,9 @@ impl OrderBook{
 
         Ok(order) 
     }
+   
 
-    pub fn match_order(&mut self, mut taker: Order) -> (Vec<Fill>, Option<Order>) {
+    pub fn match_order(&mut self, mut taker:  Order) -> (Vec<Fill>, Option<Order>) {
         let mut fills: Vec<Fill> = Vec::new();
 
         loop {
@@ -323,7 +309,6 @@ impl OrderBook{
 
         (fills, remaining)
     }
-  
     
     
 }
