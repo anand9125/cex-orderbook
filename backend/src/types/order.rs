@@ -1,7 +1,8 @@
 pub use serde::{Serialize,Deserialize};
+use tokio::sync::oneshot;
 use uuid::Uuid;
 
-use crate::Order;
+use crate::{Order, OrderId, Quantity, UserId};
 
 #[derive(Deserialize, Serialize)]
 pub struct OrderRequest {
@@ -33,6 +34,37 @@ pub struct Response {
     pub message: String,
     pub error: String,
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+
+pub enum Priority {
+    Critical = 0,
+    High = 1,
+    Normal = 2, 
+    Low = 3
+}
+pub enum OrderStatus {
+    Accepted,
+    FullyFilled,
+    PartiallyFilled,
+    Rejected,
+    Cancelled,
+}
+pub struct OrderResponse{
+    pub order_id : OrderId,
+    pub status : OrderStatus,
+    pub filled : Quantity,
+    pub remaining : Quantity
+}
 pub enum OrderBookMessage{
-    Order(Order)  //Enum Variants With Data = Structs Inside an Enum
+    PlaceOrder{
+        order: Order,
+        priority : Priority,
+        responder : oneshot::Sender<Result<OrderResponse,String>>
+    },
+    CancelOrder{
+        order_id : OrderId,
+        user_id : UserId,
+        priority : Priority,
+        responder : oneshot::Sender<Result<OrderResponse,String>>
+    }
 }

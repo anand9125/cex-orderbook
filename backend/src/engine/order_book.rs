@@ -1,8 +1,7 @@
-use std::{collections::{BTreeMap, HashMap, VecDeque}, fmt::format, time::{SystemTime, UNIX_EPOCH}};
+use std::{collections::{BTreeMap, HashMap, VecDeque}, time::{SystemTime, UNIX_EPOCH}};
 
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use tokio::sync::oneshot;
 use uuid::Uuid;
 
 use crate::types::{ OrderType, Side};
@@ -11,20 +10,19 @@ pub type OrderId = Uuid;
 pub type UserId = Uuid;
 pub type Quantity = Decimal;
 
+
 pub struct LimitOrder{
     pub user_id :Uuid,
     pub side : Side,
     pub price : Price,
     pub quantity : Quantity,
     pub leverage : Decimal,
-    pub responder : Option<oneshot::Sender<OrderResponse>>
 }
 pub struct MarketOrder{
     pub user_id : Uuid,
     pub side : Side,
     pub quantity : Quantity,
     pub leverage : Decimal,
-    pub responder : Option<oneshot::Sender<OrderResponse>>
 }
 
 pub struct PriceLevel{
@@ -41,15 +39,9 @@ pub struct Order {
     pub order_type : OrderType,
     pub quantity : Quantity,
     pub filled : Quantity,
-    pub responder : Option<oneshot::Sender<OrderResponse>>  
 }
 
-#[derive(Clone)]
-pub struct OrderResponse{
-    pub status : String,
-    pub filled : Decimal,
-    pub remaining : Decimal
-}
+
 
 
 impl Order {
@@ -63,7 +55,6 @@ impl Order {
             leverage : limit_order.leverage,
             order_type : OrderType::Limit,
             filled : dec!(0),
-            responder : limit_order.responder
         }
     }
     pub fn market_order(market_order : MarketOrder)->Self{
@@ -76,7 +67,6 @@ impl Order {
             order_type : OrderType::Market,
             quantity : market_order.quantity,
             filled : dec!(0),
-            responder : market_order.responder
         }
     } 
     pub fn remaining(&self)->Quantity{
@@ -333,7 +323,8 @@ impl OrderBook{
 
         (fills, remaining)
     }
-
+  
+    
     
 }
 pub fn now_nanos() -> u128 {
@@ -341,6 +332,6 @@ pub fn now_nanos() -> u128 {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos()
-    }
+}
 
 
