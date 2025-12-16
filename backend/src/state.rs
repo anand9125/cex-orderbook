@@ -1,9 +1,9 @@
 use db::Db;
-use tokio::sync::mpsc::Sender;
+use std::sync::mpsc;
 
 use crate::types::OrderBookMessage;
 
 pub struct AppState{
-    pub book_tx : Sender<OrderBookMessage>,
+    pub book_tx : mpsc::SyncSender<OrderBookMessage>,
     pub db: Db
 }

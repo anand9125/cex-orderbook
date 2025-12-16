@@ -30,6 +30,7 @@ pub struct PriceLevel{
     pub orders : VecDeque<OrderId>,
     pub total_qty : Quantity
 }
+
 pub struct Order {
     pub order_id : Uuid,
     pub user_id : Uuid,
@@ -40,9 +41,6 @@ pub struct Order {
     pub quantity : Quantity,
     pub filled : Quantity,
 }
-
-
-
 
 impl Order {
     pub fn limit_order(limit_order:LimitOrder)->Self{
@@ -83,7 +81,7 @@ pub struct OrderBook {
    pub best_ask :Option<Price>,
    pub fill_seq:u64  //sequence numners for fills
 }
-#[derive(Clone)]
+#[derive(Clone,Copy)]
 pub struct Fill{
     pub seq_no : u64,
     pub maker_order_id:OrderId,
@@ -140,7 +138,7 @@ impl OrderBook{
         let order_id = order.order_id;
         let user_id = order.user_id;
         let price = order.price.unwrap();
-        let amount = order.quantity;
+        let amount = order.remaining();
         let side = order.side;
 
 
@@ -294,6 +292,7 @@ impl OrderBook{
             }
         }
 
+        
         self.update_best_prices();
 
         let remaining = match taker.order_type {
@@ -309,7 +308,6 @@ impl OrderBook{
 
         (fills, remaining)
     }
-    
     
 }
 pub fn now_nanos() -> u128 {

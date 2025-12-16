@@ -15,7 +15,7 @@ pub struct OrderRequest {
     pub leverage: u32,
 }
 
-#[derive(Deserialize, Serialize,PartialEq)]
+#[derive(Deserialize, Serialize,PartialEq,Clone,Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum OrderType {
     Market,
@@ -50,6 +50,7 @@ pub enum OrderStatus {
     PartiallyFilled,
     Rejected,
     Cancelled,
+    New
 }
 pub struct OrderResponse{
     pub order_id : OrderId,
