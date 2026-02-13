@@ -12,6 +12,6 @@ pub struct UserResponse{
     pub id : Uuid
 }
 #[derive(Serialize,Deserialize)]
-pub struct SinginResponse{
+pub struct SigninResponse{
     pub token: String
 }

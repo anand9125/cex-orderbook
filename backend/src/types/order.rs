@@ -3,8 +3,9 @@ use tokio::sync::oneshot;
 use uuid::Uuid;
 use std::fmt;
 
-
 use crate::{Order, OrderId, Price, Quantity, UserId};
+
+
 
 #[derive(Deserialize, Serialize)]
 pub struct OrderRequest {
@@ -14,7 +15,7 @@ pub struct OrderRequest {
     pub side: Side,
     pub quantity: f64,
     pub price: Option<f64>,
-    pub leverage: u32,
+    pub leverage: u64,
 }
 #[derive(Deserialize,Serialize)]
 pub struct CanceledOrderRequest{

@@ -11,12 +11,12 @@ pub struct Db{
 
 impl Db {
     pub async fn new()->Result<Self>{
-        let db = "postgres://anand:password@localhost:5432/perp";
+        dotenvy::dotenv().ok();
+        let db = "postgresql://postgres:postgres@localhost:5432/perp";
         let pool = PgPoolOptions::new()
             .max_connections(5)
             .connect(&db)
             .await?;
-
 
         Ok(Self{
             pool

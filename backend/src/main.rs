@@ -1,59 +1,43 @@
-use std::sync::Arc;
-
-use actix_web::{App, HttpServer, web};
-use db::Db;
-pub mod auth;
-pub use auth::*;
 pub mod models;
 pub use models::*;
+pub mod state;
+pub use state::*;
 pub mod types;
-use std::sync::mpsc;
-use types::*;
+use tokio::net::TcpListener;
+pub use types::*;
+pub mod auth;
+pub use auth::*;
 pub mod engine;
 pub use engine::*;
+use std::sync::mpsc;
 
-use crate::state::AppState;
-pub mod state;
+use axum::{Router, routing::post};
+use db::Db;
+use std::sync::Arc;
 
-
-#[actix_web::main]
-async fn main() {
+#[tokio::main]
+async fn main(){
+    dotenvy::dotenv().ok();
+    let db = Db::new().await.expect("db init needed");
     let (book_tx, book_rx) = mpsc::sync_channel::<OrderBookMessage>(1000);
 
-    let ring_buffer = Arc::new(RingBuffer::<Event>::new(256));
-    let engine_ring = Arc::clone(&ring_buffer);
 
-    dotenvy::dotenv().ok();
-    let db = Db::new().await.expect("db init failed");
+    let app_state = Arc::new(AppState {
+        book_tx,
+        db,
+    });
+    let app = Router::new()
+        .route("/signup", post(create_user))
+        .route("/signin", post(signin))  
+        .route("/place_order", post(place_order))
+        .route("/cancel", post(cancel_order))
+        .with_state(app_state);  
 
-    std::thread::Builder::new()
-        .name("matching-engine".to_string())
-        .spawn(move || {
-            println!("[ENGINE] Matching engine thread started");
+    let listener = TcpListener::bind("0.0.0.0:3000")
+        .await
+        .expect("failed to bind");
 
-            let mut engine = MatchingEngine::new(engine_ring);
-            engine.run(book_rx);
-
-            println!("[ENGINE] Matching engine stopped");
-        })
-        .expect("failed to spawn matching engine");
-
-    println!("[MAIN] Matching engine spawned");
-
-    // THEN START HTTP SERVER
-    let _ = HttpServer::new(move || {
-        App::new()
-            .app_data(web::Data::new(AppState {
-                book_tx: book_tx.clone(),
-                db: db.clone(),
-            }))
-            .service(web::resource("/signup").route(web::post().to(create_user)))
-            .service(web::resource("/signin").route(web::post().to(signin)))
-            .service(web::resource("/place_order").route(web::post().to(place_order)))
-            .service(web::resource("/cancel_order").route(web::post().to(cancel_order)))
-    })
-    .bind("0.0.0.0:3000")
-    .unwrap()
-    .run()
-    .await;
+    axum::serve(listener, app)
+        .await
+        .expect("server failed");
 }

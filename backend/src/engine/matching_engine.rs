@@ -34,20 +34,17 @@ impl MatchingEngine{
                     break;
                 }
             }
-         //drain more cmd (non blocking)
          while batch.len()<256{
             match cmd_rx.try_recv(){ //try_recv return immediately if no messge
                Ok(cmd)=>batch.push(cmd),
                Err(_) =>break
             }
          }
-         //sort by key => reorder the message inside the batch based on the value return by cmd.priorty message with lower key value come first
-         //keys are 0,1,2,3 ordering rule sorts assending so sorting the batch order become critical high normal low
+
          batch.sort_by_key(|cmd| cmd.priority());
 
          self.process_batch(&mut batch);
          
-         //clear batch
          batch.clear();
 
       }
@@ -124,7 +121,6 @@ impl MatchingEngine{
             timestamp: now_nanos(),
          });
       }
-      //Prepare the send resposne for api layer
       let original_qty = order_quantity;
       let total_filled:Quantity = fills.iter().map(|f|f.quantity).sum();
       let remaining = original_qty.checked_sub(total_filled).ok_or("err").unwrap();
