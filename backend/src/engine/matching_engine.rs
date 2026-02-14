@@ -26,21 +26,19 @@ impl MatchingEngine{
    ){
       let mut batch:Vec<OrderBookMessage> = Vec::with_capacity(256);
       loop{
-         //blocking revc wait for first command
-            match cmd_rx.recv() {
-                Ok(cmd) => batch.push(cmd),
-                Err(_) => {
-                    println!(" [ENGINE] Command channel closed");
-                    break;
-                }
+         match cmd_rx.recv() {
+            Ok(cmd) => batch.push(cmd),
+            Err(_) => {
+               println!(" [ENGINE] Command channel closed");
+               break;
             }
+         }
          while batch.len()<256{
-            match cmd_rx.try_recv(){ //try_recv return immediately if no messge
+            match cmd_rx.try_recv(){ 
                Ok(cmd)=>batch.push(cmd),
                Err(_) =>break
             }
          }
-
          batch.sort_by_key(|cmd| cmd.priority());
 
          self.process_batch(&mut batch);

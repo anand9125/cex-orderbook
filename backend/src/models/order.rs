@@ -133,8 +133,6 @@ pub async fn place_order(
 }
 
 
-
-
 pub async fn cancel_order(
     State(state): State<Arc<AppState>>,
     Json(req): Json<CanceledOrderRequest>,
@@ -158,8 +156,6 @@ pub async fn cancel_order(
             }),
         );
     }
-
-
     match rx.await {
         Ok(Ok(OrderResponse::CanceledOrder {
             order_id,
